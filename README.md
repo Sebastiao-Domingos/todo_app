@@ -1,4 +1,4 @@
-# TaskFlow
+# Task-Dimbo
 
 Aplicação de gestão de tarefas construída com Django e Tailwind CSS. Suporta múltiplos utilizadores, modo escuro/claro e dois idiomas (Português e English).
 
