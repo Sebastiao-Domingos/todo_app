@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}TaskFlow — Dashboard{% endblock %}
+
+{% block page_title %}
+    <div>
+      <h1 class="text-xl font-bold" style="font-family:'Syne',sans-serif;color:var(--text)">Dashboard</h1>
+      <p class="text-xs mt-0.5" style="color:var(--text-muted)">{% trans "Visão geral das suas tarefas" %}</p>
+    </div>
+    {% endblock %}
+
+    {% block header_actions %}
+    <a href="{% url 'tasks:list' %}" class="btn-primary flex items-center gap-2 text-sm">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round"><path d="M12 4v16m8-8H4"/></svg>
+      {% trans "Nova Tarefa" %}
+    </a>
+{% endblock %}
+
+{% block content %}
+    <!-- Welcome banner -->
+    <div class="rounded-2xl p-6 mb-6 flex items-center justify-between overflow-hidden relative" style="background:linear-gradient(135deg,var(--primary),#a855f7)">
+      <div class="relative z-10">
+        <h2 class="text-white text-2xl font-bold mb-1" style="font-family:'Syne',sans-serif">
+          {% trans "Olá" %}, {{ user.get_full_name|default:user.username }}! 👋
+        </h2>
+        <p class="text-purple-200 text-sm">
+          {% if stats.completion_rate >= 80 %}
+            {% trans "Incrível! Você está quase lá!" %}
+          {% elif stats.completion_rate >= 50 %}
+            {% trans "Bom trabalho! Continue assim." %}
+          {% else %}
+            {% trans "Vamos lá! Há trabalho a fazer." %}
+          {% endif %}
+          &mdash; {{ stats.completion_rate }}% {% trans "concluído" %}
+        </p>
+      </div>
+      <!-- Progress ring -->
+      <div class="relative w-20 h-20 flex-shrink-0">
+        <svg class="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
+          <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="8"/>
+          <circle cx="40" cy="40" r="32" fill="none" stroke="white" stroke-width="8"
+            stroke-dasharray="{{ stats.completion_rate|floatformat:0 }} 100"
+            stroke-dasharray="201" stroke-linecap="round"
+            style="stroke-dasharray:{{ stats.completion_rate }}px 201px"/>
+        </svg>
+        <div class="absolute inset-0 flex items-center justify-center">
+          <span class="text-white font-bold text-lg" style="font-family:'Syne',sans-serif">{{ stats.completion_rate }}%</span>
+        </div>
+      </div>
+      <!-- Decorative circles -->
+      <div class="absolute -right-8 -top-8 w-32 h-32 rounded-full opacity-10" style="background:white"></div>
+      <div class="absolute -right-4 bottom-0 w-20 h-20 rounded-full opacity-10" style="background:white"></div>
+    </div>
+
+    <!-- Stats row -->
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+      {% with s=stats %}
+      <div class="rounded-2xl p-4 bg-surface task-card fade-in" style="border:1px solid var(--border)">
+        <div class="text-xs font-medium uppercase tracking-wide mb-2" style="color:var(--text-muted)">{% trans "Total" %}</div>
+        <div class="text-3xl font-bold" style="font-family:'Syne',sans-serif;color:var(--text)">{{ s.total }}</div>
+      </div>
+      <div class="rounded-2xl p-4 bg-surface task-card fade-in" style="border:1px solid var(--border);animation-delay:.05s">
+        <div class="text-xs font-medium uppercase tracking-wide mb-2 text-emerald-600">{% trans "Concluídas" %}</div>
+        <div class="text-3xl font-bold text-emerald-600" style="font-family:'Syne',sans-serif">{{ s.done }}</div>
+      </div>
+      <div class="rounded-2xl p-4 bg-surface task-card fade-in" style="border:1px solid var(--border);animation-delay:.1s">
+        <div class="text-xs font-medium uppercase tracking-wide mb-2 text-blue-600">{% trans "Em Andamento" %}</div>
+        <div class="text-3xl font-bold text-blue-600" style="font-family:'Syne',sans-serif">{{ s.in_progress }}</div>
+      </div>
+      <div class="rounded-2xl p-4 bg-surface task-card fade-in" style="border:1px solid var(--border);animation-delay:.15s">
+        <div class="text-xs font-medium uppercase tracking-wide mb-2 text-amber-600">{% trans "Pendentes" %}</div>
+        <div class="text-3xl font-bold text-amber-600" style="font-family:'Syne',sans-serif">{{ s.pending }}</div>
+      </div>
+      <div class="rounded-2xl p-4 bg-surface task-card fade-in {% if s.overdue %}border-red-200{% endif %}" style="border:1px solid {% if s.overdue %}#fecaca{% else %}var(--border){% endif %};animation-delay:.2s">
+        <div class="text-xs font-medium uppercase tracking-wide mb-2 {% if s.overdue %}text-red-600{% endif %}" style="{% if not s.overdue %}color:var(--text-muted){% endif %}">{% trans "Atrasadas" %}</div>
+        <div class="text-3xl font-bold {% if s.overdue %}text-red-600{% endif %}" style="font-family:'Syne',sans-serif;{% if not s.overdue %}color:var(--text){% endif %}">{{ s.overdue }}</div>
+      </div>
+      {% endwith %}
+    </div>
+
+    <!-- Charts + side panels -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+
+      <!-- Weekly chart -->
+      <div class="lg:col-span-2 rounded-2xl p-6 bg-surface" style="border:1px solid var(--border)">
+        <h3 class="font-semibold text-sm mb-4" style="color:var(--text)">{% trans "Tarefas concluídas — últimos 7 dias" %}</h3>
+        <div id="weekly-chart" class="h-44 flex items-end gap-2"></div>
+        <div id="weekly-labels" class="flex gap-2 mt-2"></div>
+      </div>
+
+      <!-- Priority donut -->
+      <div class="rounded-2xl p-6 bg-surface" style="border:1px solid var(--border)">
+        <h3 class="font-semibold text-sm mb-4" style="color:var(--text)">{% trans "Por prioridade" %} ({% trans "abertas" %})</h3>
+        <div class="flex justify-center mb-4">
+          <svg viewBox="0 0 120 120" class="w-32 h-32">
+            {% with total_open=priority_data.high|add:priority_data.medium|add:priority_data.low %}
+            {% if total_open > 0 %}
+              {% with h=priority_data.high m=priority_data.medium l=priority_data.low %}
+              <!-- Simple donut using dasharray -->
+              <circle cx="60" cy="60" r="46" fill="none" stroke="#f0eeff" stroke-width="20"/>
+              {% if h %}<circle cx="60" cy="60" r="46" fill="none" stroke="#ef4444" stroke-width="20" stroke-dasharray="{{ h }}00 1000" stroke-dashoffset="0" transform="rotate(-90 60 60)" style="stroke-dasharray:{{ h|floatformat:0 }}px 1000px" id="donut-high"/>{%endif%}
+              {% if m %}<circle cx="60" cy="60" r="46" fill="none" stroke="#f59e0b" stroke-width="20" id="donut-med"/>{%endif%}
+              {% if l %}<circle cx="60" cy="60" r="46" fill="none" stroke="#10b981" stroke-width="20" id="donut-low"/>{%endif%}
+              <text x="60" y="55" text-anchor="middle" fill="currentColor" font-size="22" font-weight="700" style="color:var(--text)">{{ total_open }}</text>
+              <text x="60" y="70" text-anchor="middle" fill="#9490b8" font-size="9">{% trans "abertas" %}</text>
+              {% endwith %}
+            {% else %}
+              <circle cx="60" cy="60" r="46" fill="none" stroke="#e4e2f7" stroke-width="20"/>
+              <text x="60" y="65" text-anchor="middle" fill="#9490b8" font-size="10">0</text>
+            {% endif %}
+            {% endwith %}
+          </svg>
+        </div>
+        <div class="space-y-2">
+          <div class="flex items-center justify-between text-sm">
+            <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm bg-red-500 flex-shrink-0"></span><span style="color:var(--text-muted)">{% trans "Alta" %}</span></div>
+            <span class="font-semibold" style="color:var(--text)">{{ priority_data.high }}</span>
+          </div>
+          <div class="flex items-center justify-between text-sm">
+            <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm bg-amber-500 flex-shrink-0"></span><span style="color:var(--text-muted)">{% trans "Média" %}</span></div>
+            <span class="font-semibold" style="color:var(--text)">{{ priority_data.medium }}</span>
+          </div>
+          <div class="flex items-center justify-between text-sm">
+            <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm bg-emerald-500 flex-shrink-0"></span><span style="color:var(--text-muted)">{% trans "Baixa" %}</span></div>
+            <span class="font-semibold" style="color:var(--text)">{{ priority_data.low }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<!-- Due today + Recent -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+      <!-- Due today -->
+      <div class="rounded-2xl p-6 bg-surface" style="border:1px solid var(--border)">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold text-sm" style="color:var(--text)">📅 {% trans "Para hoje" %}</h3>
+          <span class="text-xs px-2 py-1 rounded-lg font-medium" style="background:var(--surface2);color:var(--text-muted)">{{ due_today.count }}</span>
+        </div>
+        {% if due_today %}
+        <div class="space-y-2">
+          {% for task in due_today %}
+          <div class="flex items-center gap-3 p-3 rounded-xl priority-{{ task.priority }}" style="background:var(--surface2)">
+            <form method="post" action="{% url 'tasks:toggle' task.pk %}">{% csrf_token %}
+              <button type="submit" class="w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 hover:scale-110 transition-transform" style="border-color:var(--border)"></button>
+            </form>
+            <span class="text-sm font-medium flex-1 truncate" style="color:var(--text)">{{ task.title }}</span>
+            {% if task.priority == 'high' %}<span class="text-xs text-red-500 font-bold">●</span>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-6">
+          <div class="text-3xl mb-2">🎉</div>
+          <p class="text-sm" style="color:var(--text-muted)">{% trans "Nada para hoje!" %}</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Categories progress -->
+      <div class="rounded-2xl p-6 bg-surface" style="border:1px solid var(--border)">
+        <h3 class="font-semibold text-sm mb-4" style="color:var(--text)">{% trans "Categorias" %}</h3>
+        {% if categories_data %}
+        <div class="space-y-3">
+          {% for cat in categories_data %}
+          {% if cat.total > 0 %}
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-sm" style="background:{{ cat.color }}"></span>
+                <span class="text-sm font-medium" style="color:var(--text)">{{ cat.name }}</span>
+              </div>
+              <span class="text-xs" style="color:var(--text-muted)">{{ cat.done_count }}/{{ cat.total }}</span>
+            </div>
+            <div class="h-2 rounded-full overflow-hidden" style="background:var(--surface2)">
+              {% widthratio cat.done_count cat.total 100 as pct %}
+              <div class="h-full rounded-full transition-all" style="width:{{ pct }}%;background:{{ cat.color }}"></div>
+            </div>
+          </div>
+          {% endif %}
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-6">
+          <p class="text-sm" style="color:var(--text-muted)">{% trans "Nenhuma categoria criada." %}</p>
+          <a href="{% url 'tasks:categories' %}" class="text-sm font-medium mt-2 inline-block" style="color:var(--primary)">{% trans "Criar agora" %} →</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Recent activity -->
+    <div class="rounded-2xl p-6 bg-surface" style="border:1px solid var(--border)">
+      <h3 class="font-semibold text-sm mb-4" style="color:var(--text)">{% trans "Atividade recente" %}</h3>
+      {% if recent %}
+      <div class="space-y-2">
+        {% for task in recent %}
+        <div class="flex items-center gap-4 p-3 rounded-xl task-card priority-{{ task.priority }}" style="background:var(--surface2)">
+          <div class="w-2 h-2 rounded-full flex-shrink-0
+            {% if task.status == 'done' %}bg-emerald-500
+            {% elif task.status == 'in_progress' %}bg-blue-500
+            {% else %}bg-amber-500{% endif %}"></div>
+          <span class="text-sm font-medium flex-1 truncate {% if task.is_done %}line-through opacity-50{% endif %}" style="color:var(--text)">{{ task.title }}</span>
+          {% if task.category %}<span class="text-xs px-2 py-0.5 rounded-md text-white font-medium" style="background:{{ task.category.color }}">{{ task.category.name }}</span>{% endif %}
+          <span class="text-xs flex-shrink-0" style="color:var(--text-muted)">{{ task.updated_at|timesince }} {% trans "atrás" %}</span>
+          <a href="{% url 'tasks:edit' task.pk %}" class="text-xs font-medium hover:underline flex-shrink-0" style="color:var(--primary)">{% trans "Editar" %}</a>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-sm text-center py-4" style="color:var(--text-muted)">{% trans "Nenhuma atividade recente." %}</p>
+      {% endif %}
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+  // Weekly bar chart
+      const weeklyData = {{ weekly_data|safe }};
+      const chart = document.getElementById('weekly-chart');
+      const labels = document.getElementById('weekly-labels');
+      if (chart && weeklyData) {
+        const max = Math.max(...weeklyData.map(d => d.count), 1);
+        weeklyData.forEach(d => {
+          const pct = (d.count / max) * 100;
+          const bar = document.createElement('div');
+          bar.style.cssText = `flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;`;
+          bar.innerHTML = `
+            <span style="font-size:11px;font-weight:600;color:var(--text)">${d.count > 0 ? d.count : ''}</span>
+            <div style="width:100%;border-radius:6px 6px 0 0;transition:height .6s ease;background:var(--primary);opacity:${d.count>0?'1':'.2'};height:${Math.max(pct,4)}%"></div>
+          `;
+          chart.appendChild(bar);
+          const lbl = document.createElement('div');
+          lbl.style.cssText = `flex:1;text-align:center;font-size:10px;color:var(--text-muted)`;
+          lbl.textContent = d.day;
+          labels.appendChild(lbl);
+        });
+      }
+
+      // Donut chart - compute segments
+      const high = {{ priority_data.high }};
+      const med = {{ priority_data.medium }};
+      const low = {{ priority_data.low }};
+      const total = high + med + low;
+      if (total > 0) {
+        const circ = 2 * Math.PI * 46; // ~289
+        let offset = 0;
+        const segments = [
+          {id:'donut-high', val:high, color:'#ef4444'},
+          {id:'donut-med', val:med, color:'#f59e0b'},
+          {id:'donut-low', val:low, color:'#10b981'},
+        ];
+        segments.forEach(s => {
+          const el = document.getElementById(s.id);
+          if (el) {
+            const len = (s.val / total) * circ;
+            el.style.strokeDasharray = `${len} ${circ}`;
+            el.style.strokeDashoffset = -offset;
+            el.setAttribute('transform', 'rotate(-90 60 60)');
+            offset += len;
+          }
+        });
+      }
+  </script>
+{% endblock %}

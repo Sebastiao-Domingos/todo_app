@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}TaskFlow — Kanban{% endblock %}
+
+{% block page_title %}
+<div>
+  <h1 class="text-xl font-bold" style="font-family:'Syne',sans-serif;color:var(--text)">{% trans "Quadro Kanban" %}</h1>
+  <p class="text-xs mt-0.5" style="color:var(--text-muted)">{% trans "Arraste as tarefas entre colunas" %}</p>
+</div>
+{% endblock %}
+
+{% block header_actions %}
+<button onclick="openModal('task-modal')" class="btn-primary flex items-center gap-2 text-sm">
+  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round"><path d="M12 4v16m8-8H4"/></svg>
+  {% trans "Nova Tarefa" %}
+</button>
+{% endblock %}
+
+{% block content %}
+<style>
+.kanban-col{min-height:400px;transition:background .2s}
+.kanban-col.drag-over{background:rgba(124,58,237,.06)!important;border-style:dashed!important}
+.task-card[draggable]{cursor:grab}.task-card.dragging{opacity:.4;transform:scale(.97)}
+</style>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+  <!-- PENDING -->
+  <div>
+    <div class="flex items-center gap-2 mb-3 px-1">
+      <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+      <h3 class="font-semibold text-sm" style="color:var(--text)">{% trans "Pendente" %}</h3>
+      <span class="ml-auto text-xs px-2 py-0.5 rounded-md font-medium" style="background:var(--surface2);color:var(--text-muted)">{{ pending.count }}</span>
+    </div>
+    <div id="col-pending" data-status="pending" class="kanban-col rounded-2xl p-3 space-y-3" style="background:var(--surface2);border:1px solid var(--border)">
+      {% for task in pending %}
+      <div class="task-card rounded-xl p-4 bg-surface priority-{{ task.priority }}" draggable="true" data-id="{{ task.pk }}" style="border:1px solid var(--border)">
+        {% include 'tasks/_kanban_card.html' %}
+      </div>
+      {% empty %}
+      <div class="text-center py-8 text-sm" style="color:var(--text-muted)">{% trans "Nenhuma tarefa" %}</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- IN PROGRESS -->
+  <div>
+    <div class="flex items-center gap-2 mb-3 px-1">
+      <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+      <h3 class="font-semibold text-sm" style="color:var(--text)">{% trans "Em Andamento" %}</h3>
+      <span class="ml-auto text-xs px-2 py-0.5 rounded-md font-medium" style="background:var(--surface2);color:var(--text-muted)">{{ in_progress.count }}</span>
+    </div>
+    <div id="col-in_progress" data-status="in_progress" class="kanban-col rounded-2xl p-3 space-y-3" style="background:var(--surface2);border:1px solid var(--border)">
+      {% for task in in_progress %}
+      <div class="task-card rounded-xl p-4 bg-surface priority-{{ task.priority }}" draggable="true" data-id="{{ task.pk }}" style="border:1px solid var(--border)">
+        {% include 'tasks/_kanban_card.html' %}
+      </div>
+      {% empty %}
+      <div class="text-center py-8 text-sm" style="color:var(--text-muted)">{% trans "Nenhuma tarefa" %}</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- DONE -->
+  <div>
+    <div class="flex items-center gap-2 mb-3 px-1">
+      <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+      <h3 class="font-semibold text-sm" style="color:var(--text)">{% trans "Concluída" %}</h3>
+      <span class="ml-auto text-xs px-2 py-0.5 rounded-md font-medium" style="background:var(--surface2);color:var(--text-muted)">{{ done.count }}</span>
+    </div>
+    <div id="col-done" data-status="done" class="kanban-col rounded-2xl p-3 space-y-3" style="background:var(--surface2);border:1px solid var(--border)">
+      {% for task in done %}
+      <div class="task-card rounded-xl p-4 bg-surface priority-{{ task.priority }}" draggable="true" data-id="{{ task.pk }}" style="border:1px solid var(--border)">
+        {% include 'tasks/_kanban_card.html' %}
+      </div>
+      {% empty %}
+      <div class="text-center py-8 text-sm" style="color:var(--text-muted)">{% trans "Nenhuma tarefa" %}</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Create Task Modal -->
+<div id="task-modal" class="modal fixed inset-0 z-50 items-center justify-center p-4" style="background:rgba(0,0,0,.5);backdrop-filter:blur(4px)">
+  <div class="w-full max-w-lg rounded-2xl p-6 shadow-2xl bg-surface">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="text-xl font-bold" style="font-family:'Syne',sans-serif;color:var(--text)">{% trans "Nova Tarefa" %}</h3>
+      <button onclick="closeModal('task-modal')" style="color:var(--text-muted)" class="w-8 h-8 rounded-lg hover:bg-red-100 hover:text-red-600 flex items-center justify-center">✕</button>
+    </div>
+    <form method="post" action="{% url 'tasks:create' %}">
+      {% csrf_token %}
+      <div class="space-y-4">
+        {% for field in form %}
+        <div>
+          <label class="block text-sm font-medium mb-1.5" style="color:var(--text)">{{ field.label }}</label>
+          {{ field }}
+        </div>
+        {% endfor %}
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button type="button" onclick="closeModal('task-modal')" class="btn-ghost flex-1">{% trans "Cancelar" %}</button>
+        <button type="submit" class="btn-primary flex-1">{% trans "Criar Tarefa" %}</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const csrfToken = '{{ csrf_token }}';
+let draggedEl = null;
+
+document.querySelectorAll('[draggable]').forEach(card => {
+  card.addEventListener('dragstart', e => {
+    draggedEl = card;
+    card.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  card.addEventListener('dragend', () => {
+    card.classList.remove('dragging');
+    draggedEl = null;
+  });
+});
+
+document.querySelectorAll('.kanban-col').forEach(col => {
+  col.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    col.classList.add('drag-over');
+  });
+  col.addEventListener('dragleave', () => col.classList.remove('drag-over'));
+  col.addEventListener('drop', async e => {
+    e.preventDefault();
+    col.classList.remove('drag-over');
+    if (!draggedEl) return;
+
+    const taskId = draggedEl.dataset.id;
+    const newStatus = col.dataset.status;
+
+    // Move card in DOM
+    col.appendChild(draggedEl);
+
+    // Remove empty placeholders
+    col.querySelectorAll('.text-center').forEach(el => el.remove());
+
+    // Update via API
+    try {
+      const res = await fetch(`/tasks/${taskId}/status/`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+        body: JSON.stringify({status: newStatus})
+      });
+      if (!res.ok) throw new Error('Failed');
+      // Update priority border visually
+      const statusColors = {pending:'#f59e0b',in_progress:'#3b82f6',done:'#10b981'};
+    } catch(err) {
+      console.error(err);
+    }
+  });
+});
+
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+document.getElementById('task-modal').addEventListener('click',function(e){if(e.target===this)closeModal('task-modal')})
+</script>
+{% endblock %}

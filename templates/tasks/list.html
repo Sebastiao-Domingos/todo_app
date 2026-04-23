@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}TaskFlow — {% trans "Tarefas" %}{% endblock %}
+
+{% block page_title %}
+    <div>
+      <h1 class="text-xl font-bold" style="font-family: 'Syne', sans-serif; color: var(--text);">{% trans "Minhas Tarefas" %}</h1>
+      <p class="text-xs mt-0.5" style="color: var(--text-muted);">{{ stats.total }} {% trans "tarefas no total" %}</p>
+    </div>
+{% endblock %}
+
+{% block header_actions %}
+  <button onclick="openModal('task-modal')" class="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-medium transition-all hover:opacity-90 active:scale-95" style="background: var(--primary);">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+    {% trans "Nova Tarefa" %}
+  </button>
+{% endblock %}
+
+{% block content %}
+<!-- Stats Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      {% with stat_items="total,done,in_progress,pending" %}
+      <div class="rounded-2xl p-5 shadow-surface" style="background: var(--surface); border: 1px solid var(--border);">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-medium uppercase tracking-wide" style="color: var(--text-muted);">{% trans "Total" %}</span>
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: rgba(124,58,237,0.12);">
+            <svg class="w-4 h-4" style="color: var(--primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h7"/></svg>
+          </div>
+        </div>
+        <p class="text-3xl font-bold" style="font-family: 'Syne', sans-serif; color: var(--text);">{{ stats.total }}</p>
+      </div>
+      <div class="rounded-2xl p-5 shadow-surface" style="background: var(--surface); border: 1px solid var(--border);">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-medium uppercase tracking-wide" style="color: var(--text-muted);">{% trans "Concluídas" %}</span>
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center bg-emerald-100 dark:bg-emerald-900/30">
+            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          </div>
+        </div>
+        <p class="text-3xl font-bold text-emerald-600" style="font-family: 'Syne', sans-serif;">{{ stats.done }}</p>
+      </div>
+      <div class="rounded-2xl p-5 shadow-surface" style="background: var(--surface); border: 1px solid var(--border);">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-medium uppercase tracking-wide" style="color: var(--text-muted);">{% trans "Em Andamento" %}</span>
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center bg-blue-100 dark:bg-blue-900/30">
+            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+        </div>
+        <p class="text-3xl font-bold text-blue-600" style="font-family: 'Syne', sans-serif;">{{ stats.in_progress }}</p>
+      </div>
+      <div class="rounded-2xl p-5 shadow-surface" style="background: var(--surface); border: 1px solid var(--border);">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-medium uppercase tracking-wide" style="color: var(--text-muted);">{% trans "Pendentes" %}</span>
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center bg-amber-100 dark:bg-amber-900/30">
+            <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+        </div>
+        <p class="text-3xl font-bold text-amber-600" style="font-family: 'Syne', sans-serif;">{{ stats.pending }}</p>
+      </div>
+      {% endwith %}
+    </div>
+
+    <!-- Filters -->
+    <div class="rounded-2xl p-4 mb-6 flex flex-wrap gap-3 items-center" style="background: var(--surface); border: 1px solid var(--border);">
+      <form method="get" class="flex flex-wrap gap-3 items-center w-full">
+        <!-- Search -->
+        <div class="relative flex-1 min-w-48">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style="color: var(--text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input type="text" name="q" value="{{ search_query }}" placeholder="{% trans 'Pesquisar tarefas...' %}" class="w-full pl-9 pr-4 py-2 rounded-xl text-sm focus:outline-none focus:ring-2" style="background: var(--surface2); border: 1px solid var(--border); color: var(--text);">
+        </div>
+        <!-- Status filter -->
+        <select name="status" onchange="this.form.submit()" class="px-3 py-2 rounded-xl text-sm focus:outline-none" style="background: var(--surface2); border: 1px solid var(--border); color: var(--text);">
+          <option value="">{% trans "Todos os status" %}</option>
+          <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>{% trans "Pendente" %}</option>
+          <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>{% trans "Em andamento" %}</option>
+          <option value="done" {% if status_filter == 'done' %}selected{% endif %}>{% trans "Concluída" %}</option>
+        </select>
+        <!-- Priority filter -->
+        <select name="priority" onchange="this.form.submit()" class="px-3 py-2 rounded-xl text-sm focus:outline-none" style="background: var(--surface2); border: 1px solid var(--border); color: var(--text);">
+          <option value="">{% trans "Todas as prioridades" %}</option>
+          <option value="high" {% if priority_filter == 'high' %}selected{% endif %}>🔴 {% trans "Alta" %}</option>
+          <option value="medium" {% if priority_filter == 'medium' %}selected{% endif %}>🟡 {% trans "Média" %}</option>
+          <option value="low" {% if priority_filter == 'low' %}selected{% endif %}>🟢 {% trans "Baixa" %}</option>
+        </select>
+        <!-- Category filter -->
+        {% if categories %}
+        <select name="category" onchange="this.form.submit()" class="px-3 py-2 rounded-xl text-sm focus:outline-none" style="background: var(--surface2); border: 1px solid var(--border); color: var(--text);">
+          <option value="">{% trans "Todas as categorias" %}</option>
+          {% for cat in categories %}
+          <option value="{{ cat.pk }}" {% if category_filter == cat.pk|stringformat:'s' %}selected{% endif %}>{{ cat.name }}</option>
+          {% endfor %}
+        </select>
+        {% endif %}
+        {% if search_query %}
+        <button type="submit" class="px-4 py-2 rounded-xl text-sm font-medium text-white" style="background: var(--primary);">{% trans "Buscar" %}</button>
+        <a href="{% url 'tasks:list' %}" class="px-4 py-2 rounded-xl text-sm" style="color: var(--text-muted);">✕ {% trans "Limpar" %}</a>
+        {% endif %}
+      </form>
+    </div>
+
+    <!-- Task List -->
+    <div class="space-y-3">
+      {% if tasks %}
+        {% for task in tasks %}
+        <div class="task-card rounded-2xl p-5 fade-in {% if task.is_done %}task-done{% endif %} priority-{{ task.priority }}"
+            style="background: var(--surface); border: 1px solid var(--border); animation-delay: {{ forloop.counter0 }}00ms">
+          <div class="flex items-start gap-4">
+            <!-- Checkbox -->
+            <form method="post" action="{% url 'tasks:toggle' task.pk %}" class="mt-0.5">
+              {% csrf_token %}
+              <button type="submit" class="w-6 h-6 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all hover:scale-110"
+                      style="{% if task.is_done %}background: #10b981; border-color: #10b981;{% else %}border-color: var(--border);{% endif %}">
+                {% if task.is_done %}
+                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                {% endif %}
+              </button>
+            </form>
+
+            <!-- Content -->
+            <div class="flex-1 min-w-0">
+              <div class="flex flex-wrap items-start gap-2 mb-1">
+                <h3 class="task-title font-semibold text-sm" style="color: var(--text);">{{ task.title }}</h3>
+                <!-- Priority badge -->
+                <span class="px-2 py-0.5 rounded-md text-xs font-medium flex-shrink-0
+                  {% if task.priority == 'high' %}bg-red-100 text-red-700
+                  {% elif task.priority == 'medium' %}bg-amber-100 text-amber-700
+                  {% else %}bg-emerald-100 text-emerald-700{% endif %}">
+                  {% if task.priority == 'high' %}▲ {% trans "Alta" %}
+                  {% elif task.priority == 'medium' %}● {% trans "Média" %}
+                  {% else %}▼ {% trans "Baixa" %}{% endif %}
+                </span>
+                <!-- Status badge -->
+                <span class="px-2 py-0.5 rounded-md text-xs font-medium flex-shrink-0
+                  {% if task.status == 'done' %}bg-emerald-100 text-emerald-700
+                  {% elif task.status == 'in_progress' %}bg-blue-100 text-blue-700
+                  {% else %}bg-gray-100 text-gray-600{% endif %}">
+                  {% if task.status == 'done' %}{% trans "Concluída" %}
+                  {% elif task.status == 'in_progress' %}{% trans "Em andamento" %}
+                  {% else %}{% trans "Pendente" %}{% endif %}
+                </span>
+                {% if task.category %}
+                <span class="px-2 py-0.5 rounded-md text-xs font-medium flex-shrink-0 text-white" style="background: {{ task.category.color }};">
+                  {{ task.category.name }}
+                </span>
+                {% endif %}
+                {% if task.is_overdue %}
+                <span class="px-2 py-0.5 rounded-md text-xs font-medium bg-red-100 text-red-700 flex-shrink-0">⚠ {% trans "Atrasada" %}</span>
+                {% endif %}
+              </div>
+              {% if task.description %}
+              <p class="text-sm mt-1 line-clamp-2" style="color: var(--text-muted);">{{ task.description }}</p>
+              {% endif %}
+              {% if task.due_date %}
+              <p class="text-xs mt-2 flex items-center gap-1" style="color: var(--text-muted);">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                {{ task.due_date }}
+              </p>
+              {% endif %}
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <a href="{% url 'tasks:edit' task.pk %}" class="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110" style="background: var(--surface2); color: var(--text-muted);" title="{% trans 'Editar' %}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              </a>
+              <form method="post" action="{% url 'tasks:delete' task.pk %}" onsubmit="return confirm('{% trans "Excluir esta tarefa?" %}')">
+                {% csrf_token %}
+                <button type="submit" class="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110 hover:bg-red-100 hover:text-red-600" style="background: var(--surface2); color: var(--text-muted);" title="{% trans 'Excluir' %}">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="text-center py-20">
+        <div class="w-20 h-20 rounded-2xl mx-auto mb-5 flex items-center justify-center" style="background: var(--surface2);">
+          <svg class="w-10 h-10" style="color: var(--text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+        </div>
+        <h3 class="font-semibold text-lg mb-2" style="color: var(--text);">{% trans "Nenhuma tarefa encontrada" %}</h3>
+        <p class="text-sm mb-6" style="color: var(--text-muted);">{% trans "Crie sua primeira tarefa clicando no botão acima." %}</p>
+        <button onclick="openModal('task-modal')" class="px-6 py-3 rounded-xl font-medium text-white text-sm" style="background: var(--primary);">
+          + {% trans "Nova Tarefa" %}
+        </button>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Create Task Modal -->
+    <div id="task-modal" class="modal fixed inset-0 z-50 items-center justify-center p-4" style="background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);">
+      <div class="w-full max-w-lg rounded-2xl p-6 shadow-2xl fade-in" style="background: var(--surface);">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-xl font-bold" style="font-family: 'Syne', sans-serif; color: var(--text);">{% trans "Nova Tarefa" %}</h3>
+          <button onclick="closeModal('task-modal')" class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-100 hover:text-red-600" style="color: var(--text-muted);">✕</button>
+        </div>
+        <form method="post" action="{% url 'tasks:create' %}">
+          {% csrf_token %}
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-1.5" style="color: var(--text);">{% trans "Título" %} *</label>
+              {{ form.title }}
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1.5" style="color: var(--text);">{% trans "Descrição" %}</label>
+              {{ form.description }}
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium mb-1.5" style="color: var(--text);">{% trans "Prioridade" %}</label>
+                {{ form.priority }}
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1.5" style="color: var(--text);">{% trans "Status" %}</label>
+                {{ form.status }}
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium mb-1.5" style="color: var(--text);">{% trans "Categoria" %}</label>
+                {{ form.category }}
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1.5" style="color: var(--text);">{% trans "Vencimento" %}</label>
+                {{ form.due_date }}
+              </div>
+            </div>
+          </div>
+          <div class="flex gap-3 mt-6">
+            <button type="button" onclick="closeModal('task-modal')" class="flex-1 py-3 rounded-xl font-medium text-sm" style="background: var(--surface2); color: var(--text);">{% trans "Cancelar" %}</button>
+            <button type="submit" class="flex-1 py-3 rounded-xl font-semibold text-sm text-white" style="background: var(--primary);">{% trans "Criar Tarefa" %}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      function openModal(id) { document.getElementById(id).classList.add('open'); }
+      function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+      document.getElementById('task-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal('task-modal');
+      });
+    </script>
+{% endblock %}

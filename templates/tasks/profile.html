@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}TaskFlow — {% trans "Perfil" %}{% endblock %}
+
+{% block page_title %}
+<div>
+  <h1 class="text-xl font-bold" style="font-family:'Syne',sans-serif;color:var(--text)">{% trans "Meu Perfil" %}</h1>
+  <p class="text-xs mt-0.5" style="color:var(--text-muted)">{% trans "Gerir conta e preferências" %}</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl space-y-6">
+
+  <!-- Avatar card -->
+  <div class="rounded-2xl p-6 bg-surface flex items-center gap-5" style="border:1px solid var(--border)">
+    <div class="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-3xl font-bold shadow-lg flex-shrink-0" id="avatar-preview" style="background:{{ prof.avatar_color }}">
+      {{ user.username.0|upper }}
+    </div>
+    <div>
+      <h2 class="text-xl font-bold" style="font-family:'Syne',sans-serif;color:var(--text)">{{ user.get_full_name|default:user.username }}</h2>
+      <p class="text-sm" style="color:var(--text-muted)">{{ user.email|default:"—" }}</p>
+      <p class="text-xs mt-1 px-2 py-0.5 rounded-md inline-block" style="background:var(--surface2);color:var(--text-muted)">
+        {% trans "Desde" %} {{ user.date_joined|date:"M Y" }}
+      </p>
+    </div>
+  </div>
+
+  <!-- Edit form -->
+  <div class="rounded-2xl p-6 bg-surface" style="border:1px solid var(--border)">
+    <h3 class="font-semibold text-sm mb-5" style="color:var(--text)">{% trans "Informações pessoais" %}</h3>
+    <form method="post">
+      {% csrf_token %}
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-sm font-medium mb-1.5" style="color:var(--text)">{% trans "Primeiro nome" %}</label>
+          <input type="text" name="first_name" value="{{ user.first_name }}" class="form-input">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1.5" style="color:var(--text)">{% trans "Sobrenome" %}</label>
+          <input type="text" name="last_name" value="{{ user.last_name }}" class="form-input">
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium mb-1.5" style="color:var(--text)">Email</label>
+        <input type="email" name="email" value="{{ user.email }}" class="form-input">
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium mb-1.5" style="color:var(--text)">{% trans "Bio" %}</label>
+        <textarea name="bio" rows="3" class="form-input" style="resize:none" placeholder="{% trans 'Uma breve descrição sobre você...' %}">{{ prof.bio }}</textarea>
+      </div>
+      <div class="mb-5">
+        <label class="block text-sm font-medium mb-2" style="color:var(--text)">{% trans "Cor do avatar" %}</label>
+        <div class="flex flex-wrap gap-2">
+          {% for color in color_list %}
+          <button type="button" onclick="setColor('{{ color }}')"
+            class="w-8 h-8 rounded-xl border-2 transition-transform hover:scale-110"
+            style="background:{{ color }};border-color:{% if prof.avatar_color == color %}white{% else %}transparent{% endif %};box-shadow:{% if prof.avatar_color == color %}0 0 0 2px {{ color }}{% else %}none{% endif %}"
+            id="color-btn-{{ forloop.counter }}">
+          </button>
+          {% endfor %}
+          <input type="color" name="avatar_color" id="avatar-color-input" value="{{ prof.avatar_color }}"
+            class="w-8 h-8 rounded-xl border-0 cursor-pointer" onchange="setColor(this.value)">
+        </div>
+      </div>
+
+      <!-- Notifications -->
+      <div class="flex items-center justify-between p-4 rounded-xl mb-5" style="background:var(--surface2)">
+        <div>
+          <p class="text-sm font-medium" style="color:var(--text)">{% trans "Alertar tarefas atrasadas" %}</p>
+          <p class="text-xs" style="color:var(--text-muted)">{% trans "Mostrar badge de tarefas em atraso" %}</p>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" name="notify_overdue" class="sr-only peer" {% if prof.notify_overdue %}checked{% endif %}>
+          <div class="w-10 h-6 rounded-full peer-checked:after:translate-x-4 after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:w-4 after:h-4 after:rounded-full after:transition-all" style="background:var(--border)" id="toggle-bg"></div>
+        </label>
+      </div>
+
+      <button type="submit" class="btn-primary w-full">{% trans "Salvar alterações" %}</button>
+    </form>
+  </div>
+
+  <!-- Stats card -->
+  <div class="rounded-2xl p-6 bg-surface" style="border:1px solid var(--border)">
+    <h3 class="font-semibold text-sm mb-4" style="color:var(--text)">{% trans "Estatísticas da conta" %}</h3>
+    <div class="grid grid-cols-3 gap-3">
+      {% with total=user.tasks.count done=user.tasks.filter %}
+      <div class="rounded-xl p-3 text-center" style="background:var(--surface2)">
+        <div class="text-2xl font-bold" style="font-family:'Syne',sans-serif;color:var(--text)">{{ user.tasks.count }}</div>
+        <div class="text-xs mt-0.5" style="color:var(--text-muted)">{% trans "Total de tarefas" %}</div>
+      </div>
+      <div class="rounded-xl p-3 text-center" style="background:var(--surface2)">
+        <div class="text-2xl font-bold text-emerald-600" style="font-family:'Syne',sans-serif">{{ user.categories.count }}</div>
+        <div class="text-xs mt-0.5" style="color:var(--text-muted)">{% trans "Categorias" %}</div>
+      </div>
+      <div class="rounded-xl p-3 text-center" style="background:var(--surface2)">
+        <div class="text-2xl font-bold" style="font-family:'Syne',sans-serif;color:var(--primary)">{{ user.date_joined|timesince|truncatewords:2 }}</div>
+        <div class="text-xs mt-0.5" style="color:var(--text-muted)">{% trans "Membro há" %}</div>
+      </div>
+      {% endwith %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentColor = '{{ prof.avatar_color }}';
+function setColor(color) {
+  currentColor = color;
+  document.getElementById('avatar-color-input').value = color;
+  document.getElementById('avatar-preview').style.background = color;
+}
+// Toggle background color
+document.querySelector('input[name="notify_overdue"]').addEventListener('change', function() {
+  document.getElementById('toggle-bg').style.background = this.checked ? 'var(--primary)' : 'var(--border)';
+});
+if (document.querySelector('input[name="notify_overdue"]').checked) {
+  document.getElementById('toggle-bg').style.background = 'var(--primary)';
+}
+</script>
+{% endblock %}

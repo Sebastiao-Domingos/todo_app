@@ -1,0 +1,185 @@
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}" class="light" id="html-root">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TaskFlow{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+    <style>
+      :root{--bg:#f8f7ff;--surface:#ffffff;--surface2:#f1f0f9;--border:#e4e2f7;--text:#1e1b3a;--text-muted:#6b6889;--primary:#7c3aed;--primary-hover:#6d28d9;--danger:#ef4444}
+      .dark{--bg:#0f0e1a;--surface:#1a1827;--surface2:#231f35;--border:#2e2a45;--text:#f0eeff;--text-muted:#9490b8;--primary:#8b5cf6;--primary-hover:#7c3aed}
+      *{box-sizing:border-box}
+      body{background-color:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;transition:background-color .3s,color .3s}
+      .bg-surface{background-color:var(--surface)}.bg-surface2{background-color:var(--surface2)}.bg-bg{background-color:var(--bg)}
+      .border-border{border-color:var(--border)}.text-text{color:var(--text)}.text-muted{color:var(--text-muted)}
+      .text-primary{color:var(--primary)}.bg-primary{background-color:var(--primary)}
+      ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--surface)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+      @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+      .fade-in{animation:fadeIn .3s ease forwards}
+      .task-card{transition:transform .2s,box-shadow .2s}.task-card:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(124,58,237,.12)}
+      .priority-high{border-left:3px solid #ef4444}.priority-medium{border-left:3px solid #f59e0b}.priority-low{border-left:3px solid #10b981}
+      .nav-link{transition:all .2s}.nav-link.active{background-color:var(--primary);color:white!important}
+      .nav-link:not(.active):hover{background-color:var(--surface2)}
+      .task-done .task-title{text-decoration:line-through;opacity:.5}
+      .modal{display:none}.modal.open{display:flex}
+      input,select,textarea{color:var(--text);background-color:var(--surface)}
+      option{background-color:var(--surface);color:var(--text)}
+      .form-input{width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:14px;transition:border-color .2s,box-shadow .2s;outline:none}
+      .form-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(124,58,237,.12)}
+      .btn-primary{background:var(--primary);color:#fff;border:none;border-radius:10px;padding:10px 18px;font-weight:600;font-size:14px;cursor:pointer;transition:opacity .2s,transform .1s}
+      .btn-primary:hover{opacity:.9}.btn-primary:active{transform:scale(.97)}
+      .btn-ghost{background:var(--surface2);color:var(--text);border:none;border-radius:10px;padding:10px 18px;font-weight:500;font-size:14px;cursor:pointer;transition:background .2s}
+      .btn-ghost:hover{background:var(--border)}
+      @keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+      .slide-down{animation:slideDown .25s ease forwards}
+      .tooltip{position:relative}.tooltip:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);font-size:11px;padding:4px 8px;border-radius:6px;white-space:nowrap;pointer-events:none;z-index:99}
+    </style>
+  </head>
+  <body class="min-h-screen">
+
+    {% if user.is_authenticated %}
+        <div class="flex min-h-screen">
+          <!-- Sidebar -->
+          <nav id="sidebar" class="w-60 min-h-screen bg-surface flex flex-col fixed left-0 top-0 z-30" style="border-right:1px solid var(--border)">
+            <!-- Logo -->
+            <div class="p-5" style="border-bottom:1px solid var(--border)">
+              <a href="{% url 'tasks:dashboard' %}" class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg" style="background:var(--primary)">
+                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                  </svg>
+                </div>
+                <span class="font-bold text-xl" style="font-family:'Syne',sans-serif;color:var(--text)">TaskFlow</span>
+              </a>
+            </div>
+
+            <!-- Nav -->
+            <div class="flex-1 p-3 space-y-0.5">
+              {% url 'tasks:dashboard' as url_dash %}
+              {% url 'tasks:list' as url_list %}
+              {% url 'tasks:kanban' as url_kanban %}
+              {% url 'tasks:categories' as url_cats %}
+              {% url 'tasks:profile' as url_profile %}
+
+              <a href="{{ url_dash }}" class="nav-link {% if request.path == url_dash %}active{% endif %} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium" style="color:var(--text)">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                {% trans "Dashboard" %}
+              </a>
+              <a href="{{ url_list }}" class="nav-link {% if request.path == url_list %}active{% endif %} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium" style="color:var(--text)">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 10h16M4 14h16M4 18h7"/></svg>
+                {% trans "Tarefas" %}
+                {% with oc=overdue_count %}{% if oc %}<span class="ml-auto text-xs font-bold px-1.5 py-0.5 rounded-md bg-red-500 text-white">{{ oc }}</span>{% endif %}{% endwith %}
+              </a>
+              <a href="{{ url_kanban }}" class="nav-link {% if request.path == url_kanban %}active{% endif %} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium" style="color:var(--text)">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 00-2 2v14a2 2 0 002 2h4M9 3h10a2 2 0 012 2v14a2 2 0 01-2 2H9M9 3v18"/></svg>
+                {% trans "Kanban" %}
+              </a>
+              <a href="{{ url_cats }}" class="nav-link {% if request.path == url_cats %}active{% endif %} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium" style="color:var(--text)">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/></svg>
+                {% trans "Categorias" %}
+              </a>
+            </div>
+
+            <!-- Bottom -->
+            <div class="p-3 space-y-1" style="border-top:1px solid var(--border)">
+              <!-- User -->
+              <a href="{{ url_profile }}" class="nav-link {% if request.path == url_profile %}active{% endif %} flex items-center gap-3 px-3 py-2 rounded-xl" style="color:var(--text)">
+                <div class="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style="background:{% if user.profile %}{{ user.profile.avatar_color }}{% else %}var(--primary){% endif %}">
+                  {{ user.username.0|upper }}
+                </div>
+                <span class="text-sm font-medium truncate">{{ user.get_full_name|default:user.username }}</span>
+              </a>
+
+              <!-- Theme -->
+              <button onclick="toggleTheme()" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl nav-link text-sm" style="color:var(--text)">
+                <svg id="sun-icon" class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                <svg id="moon-icon" class="w-4 h-4 flex-shrink-0 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round"><path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                <span id="theme-label">{% trans "Modo Escuro" %}</span>
+              </button>
+
+              <!-- Language -->
+              <form method="post" action="{% url 'set_language' %}" id="lang-form">
+                {% csrf_token %}
+                <input name="next" type="hidden" value="{{ request.path }}">
+                <input type="hidden" name="language" id="lang-input" value="{% if LANGUAGE_CODE == 'pt-br' %}en{% else %}pt-br{% endif %}">
+                <button type="submit" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl nav-link text-sm" style="color:var(--text)">
+                  <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round"><path d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10"/></svg>
+                  {% if LANGUAGE_CODE == 'pt-br' %}English{% else %}Português{% endif %}
+                </button>
+              </form>
+
+              <!-- Logout -->
+              <a href="{% url 'accounts:logout' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl nav-link text-sm" style="color:var(--text)">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                {% trans "Sair" %}
+              </a>
+            </div>
+          </nav>
+
+          <!-- Main -->
+          <main class="flex-1 min-h-screen" style="margin-left:240px;background-color:var(--bg)">
+            <header class="sticky top-0 z-20 px-8 py-4 flex items-center justify-between" style="background-color:var(--bg);border-bottom:1px solid var(--border)">
+              <div>{% block page_title %}{% endblock %}</div>
+              <div class="flex items-center gap-3">{% block header_actions %}{% endblock %}</div>
+            </header>
+
+            {% if messages %}
+              <div class="fixed top-4 right-4 z-50 space-y-2" id="flash-messages">
+                {% for message in messages %}
+                <div class="slide-down flex items-center gap-3 px-5 py-3 rounded-xl shadow-xl text-sm font-medium
+                  {% if message.tags == 'success' %}bg-emerald-500{% elif message.tags == 'error' %}bg-red-500{% else %}text-white{% endif %} text-white" style="{% if message.tags != 'success' and message.tags != 'error' %}background:var(--primary){% endif %}">
+                  {% if message.tags == 'success' %}<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>{% endif %}
+                  {{ message }}
+                </div>
+                {% endfor %}
+              </div>
+            <script>setTimeout(()=>{const m=document.getElementById('flash-messages');if(m){m.style.transition='opacity .5s';m.style.opacity='0';}},3000)</script>
+            {% endif %}
+
+            <div class="p-8">{% block content %}
+              
+              
+            {% endblock %}</div>
+          </main>
+        </div>
+
+    {% else %}
+    {% if messages %}
+        <div class="fixed top-4 right-4 z-50 space-y-2">
+          {% for message in messages %}
+          <div class="px-5 py-3 rounded-xl shadow-lg text-sm font-medium {% if message.tags == 'success' %}bg-emerald-500 text-white{% else %}bg-red-500 text-white{% endif %}">{{ message }}</div>
+          {% endfor %}
+        </div>
+    {% endif %}
+
+    {% block content_template %}{% endblock %}
+
+    {% endif %}
+
+    <script>
+        const html=document.getElementById('html-root')||document.documentElement;
+        const saved=localStorage.getItem('theme')||'light';
+        if(saved==='dark'){html.classList.remove('light');html.classList.add('dark');_updateThemeUI(true);}
+        function toggleTheme(){
+          const dark=html.classList.contains('dark');
+          html.classList.toggle('dark',!dark);html.classList.toggle('light',dark);
+          localStorage.setItem('theme',dark?'light':'dark');
+          _updateThemeUI(!dark);
+        }
+        function _updateThemeUI(isDark){
+          const s=document.getElementById('sun-icon'),m=document.getElementById('moon-icon'),l=document.getElementById('theme-label');
+          if(s)s.classList.toggle('hidden',isDark);
+          if(m)m.classList.toggle('hidden',!isDark);
+          if(l)l.textContent=isDark?'{% trans "Modo Claro" %}':'{% trans "Modo Escuro" %}';
+        }
+
+        // Overdue count for sidebar badge
+        {% if user.is_authenticated %}
+        window.overdue_count={{ overdue_count|default:0 }};
+        {% endif %}
+    </script>
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>

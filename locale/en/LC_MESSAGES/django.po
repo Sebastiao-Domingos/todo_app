@@ -1,0 +1,36 @@
+# English
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: en\n"
+
+msgid "Tarefas"
+msgstr "Tasks"
+
+msgid "Categorias"
+msgstr "Categories"
+
+msgid "Sair"
+msgstr "Logout"
+
+msgid "Nova Tarefa"
+msgstr "New Task"
+
+msgid "Criar Tarefa"
+msgstr "Create Task"
+
+msgid "Cancelar"
+msgstr "Cancel"
+
+msgid "Entrar"
+msgstr "Sign In"
+
+msgid "Criar Conta"
+msgstr "Create Account"
+
+msgid "Modo Escuro"
+msgstr "Dark Mode"
+
+msgid "Modo Claro"
+msgstr "Light Mode"

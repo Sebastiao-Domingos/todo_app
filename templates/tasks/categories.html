@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}TaskFlow — {% trans "Categorias" %}{% endblock %}
+
+{% block page_title %}
+<div>
+  <h1 class="text-xl font-bold" style="font-family: 'Syne', sans-serif; color: var(--text);">{% trans "Categorias" %}</h1>
+  <p class="text-xs mt-0.5" style="color: var(--text-muted);">{{ categories.count }} {% trans "categorias" %}</p>
+</div>
+{% endblock %}
+
+{% block header_actions %}
+<button onclick="openModal('cat-modal')" class="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-medium" style="background: var(--primary);">
+  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+  {% trans "Nova Categoria" %}
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+  {% for cat in categories %}
+  <div class="rounded-2xl p-5 fade-in task-card" style="background: var(--surface); border: 1px solid var(--border); border-left: 4px solid {{ cat.color }};">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm" style="background: {{ cat.color }};">
+          {{ cat.name.0|upper }}
+        </div>
+        <div>
+          <h3 class="font-semibold text-sm" style="color: var(--text);">{{ cat.name }}</h3>
+          <p class="text-xs" style="color: var(--text-muted);">{{ cat.task_count }} {% trans "tarefas" %}</p>
+        </div>
+      </div>
+      <form method="post" action="{% url 'tasks:category_delete' cat.pk %}" onsubmit="return confirm('{% trans "Excluir categoria?" %}')">
+        {% csrf_token %}
+        <button type="submit" class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-100 hover:text-red-600 transition-colors" style="color: var(--text-muted);">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </button>
+      </form>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-span-3 text-center py-16">
+    <div class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center" style="background: var(--surface2);">
+      <svg class="w-8 h-8" style="color: var(--text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+      </svg>
+    </div>
+    <h3 class="font-semibold mb-2" style="color: var(--text);">{% trans "Nenhuma categoria criada" %}</h3>
+    <p class="text-sm mb-4" style="color: var(--text-muted);">{% trans "Organize suas tarefas com categorias coloridas." %}</p>
+    <button onclick="openModal('cat-modal')" class="px-5 py-2.5 rounded-xl text-white text-sm font-medium" style="background: var(--primary);">
+      + {% trans "Criar Categoria" %}
+    </button>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Modal -->
+<div id="cat-modal" class="modal fixed inset-0 z-50 items-center justify-center p-4" style="background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);">
+  <div class="w-full max-w-sm rounded-2xl p-6 shadow-2xl" style="background: var(--surface);">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="text-lg font-bold" style="font-family: 'Syne', sans-serif; color: var(--text);">{% trans "Nova Categoria" %}</h3>
+      <button onclick="closeModal('cat-modal')" class="w-8 h-8 rounded-lg flex items-center justify-center" style="color: var(--text-muted);">✕</button>
+    </div>
+    <form method="post" action="{% url 'tasks:category_create' %}">
+      {% csrf_token %}
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium mb-1.5" style="color: var(--text);">{% trans "Nome" %}</label>
+          {{ form.name }}
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1.5" style="color: var(--text);">{% trans "Cor" %}</label>
+          <div class="flex items-center gap-3">
+            {{ form.color }}
+            <span class="text-sm" style="color: var(--text-muted);">{% trans "Escolha uma cor" %}</span>
+          </div>
+        </div>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button type="button" onclick="closeModal('cat-modal')" class="flex-1 py-2.5 rounded-xl text-sm" style="background: var(--surface2); color: var(--text);">{% trans "Cancelar" %}</button>
+        <button type="submit" class="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white" style="background: var(--primary);">{% trans "Criar" %}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+</script>
+{% endblock %}

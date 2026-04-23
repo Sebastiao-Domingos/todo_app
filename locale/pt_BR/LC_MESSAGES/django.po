@@ -1,0 +1,21 @@
+# Portuguese Brazil
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: pt_BR\n"
+
+msgid "Tarefas"
+msgstr "Tarefas"
+
+msgid "Categorias"
+msgstr "Categorias"
+
+msgid "Sair"
+msgstr "Sair"
+
+msgid "Tasks"
+msgstr "Tarefas"
+
+msgid "Categories"
+msgstr "Categorias"

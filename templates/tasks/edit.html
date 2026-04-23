@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}TaskFlow — {% trans "Editar Tarefa" %}{% endblock %}
+
+{% block page_title %}
+<div class="flex items-center gap-3">
+  <a href="{% url 'tasks:list' %}" class="w-8 h-8 rounded-lg flex items-center justify-center hover:scale-110 transition-transform" style="background: var(--surface2); color: var(--text);">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+  </a>
+  <div>
+    <h1 class="text-xl font-bold" style="font-family: 'Syne', sans-serif; color: var(--text);">{% trans "Editar Tarefa" %}</h1>
+    <p class="text-xs" style="color: var(--text-muted);">{{ task.title|truncatechars:40 }}</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl">
+  <div class="rounded-2xl p-8 shadow-surface" style="background: var(--surface); border: 1px solid var(--border);">
+    <form method="post">
+      {% csrf_token %}
+      <div class="space-y-5">
+        <div>
+          <label class="block text-sm font-medium mb-2" style="color: var(--text);">{% trans "Título" %} *</label>
+          {{ form.title }}
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2" style="color: var(--text);">{% trans "Descrição" %}</label>
+          {{ form.description }}
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-2" style="color: var(--text);">{% trans "Prioridade" %}</label>
+            {{ form.priority }}
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-2" style="color: var(--text);">{% trans "Status" %}</label>
+            {{ form.status }}
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-2" style="color: var(--text);">{% trans "Categoria" %}</label>
+            {{ form.category }}
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-2" style="color: var(--text);">{% trans "Data de Vencimento" %}</label>
+            {{ form.due_date }}
+          </div>
+        </div>
+      </div>
+      <div class="flex gap-3 mt-8">
+        <a href="{% url 'tasks:list' %}" class="flex-1 py-3 rounded-xl font-medium text-sm text-center" style="background: var(--surface2); color: var(--text);">{% trans "Cancelar" %}</a>
+        <button type="submit" class="flex-1 py-3 rounded-xl font-semibold text-sm text-white" style="background: var(--primary);">{% trans "Salvar Alterações" %}</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Danger zone -->
+  <div class="mt-6 rounded-2xl p-5" style="background: var(--surface); border: 1px solid #fee2e2;">
+    <h4 class="text-sm font-semibold text-red-600 mb-3">{% trans "Zona de Perigo" %}</h4>
+    <form method="post" action="{% url 'tasks:delete' task.pk %}" onsubmit="return confirm('{% trans "Tem certeza que deseja excluir esta tarefa?" %}')">
+      {% csrf_token %}
+      <button type="submit" class="px-4 py-2 rounded-xl text-sm font-medium text-red-600 hover:bg-red-600 hover:text-white transition-colors" style="border: 1px solid #fecaca;">
+        🗑 {% trans "Excluir esta tarefa" %}
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
